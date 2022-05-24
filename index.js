@@ -101,6 +101,7 @@ const getCryptoDataByArgs = () => {
     //1. Given no parameters, return the latest portfolio value per token in USD
     if (!arguments.token && !arguments.date) {
         console.log("Given no parameters, return the latest portfolio value per token in USD");
+        console.log("Loading...........");
         getLatestPortfolioValue().then((data) => {
             const tokens = Object.keys(data);
             compareCrypto(tokens).then((crypto) => {
@@ -114,6 +115,7 @@ const getCryptoDataByArgs = () => {
     //2. Given a token, return the latest portfolio value for that token in USD
     if (arguments.token && !arguments.date) {
         console.log("Given a token, return the latest portfolio value for that token in USD");
+        console.log("Loading...........");
         getLatestPortfolioValue().then((data) => {
             if (Object.keys(data).length > 0) {
                 const tokens = Object.keys(data);
@@ -133,6 +135,7 @@ const getCryptoDataByArgs = () => {
     //3. Given a date, return the portfolio value per token in USD on that date
     if (!arguments.token && arguments.date) {
         console.log("Given a date, return the portfolio value per token in USD on that date");
+        console.log("Loading...........");
         getLatestPortfolioValue(arguments.date).then((data) => {
             if (Object.keys(data).length > 0) {
                 const tokens = Object.keys(data);
@@ -150,6 +153,7 @@ const getCryptoDataByArgs = () => {
     //4. Given a date and a token, return the portfolio value of that token in USD on that date
     if (arguments.token && arguments.date) {
         console.log("Given a date and a token, return the portfolio value of that token in USD on that date");
+        console.log("Loading...........");
         getLatestPortfolioValue(arguments.date).then((data) => {
             if (Object.keys(data).length > 0) {
                 const tokens = Object.keys(data);
@@ -166,6 +170,5 @@ const getCryptoDataByArgs = () => {
         });
     }
 };
-
 
 getCryptoDataByArgs();
