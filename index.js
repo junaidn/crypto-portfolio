@@ -22,7 +22,7 @@ const stream = fs.createReadStream(fileContent)
 
 
 // get latest porfolio value of tokens
-const getLatestPortfolioValue = () => {
+const getLatestPortfolioValue = (date = null) => {
     const portfolio = {};
     return new Promise((resolve, reject) => {
         stream.on("data", (data) => {
@@ -40,22 +40,40 @@ const getLatestPortfolioValue = () => {
                 numberOfOccurence = 0;
                 stream.resume();
             }
-            if (portfolio.hasOwnProperty(token)) {
-                if (transaction_type === "WITHDRAWAL") {
-                    portfolio[token].amount = (amount > portfolio[token].amount) ? 
-                        (parseFloat(amount) - parseFloat(portfolio[token].amount)) : 
-                        (parseFloat(portfolio[token].amount) - parseFloat(amount));
-                } else {
-                    portfolio[token].amount = parseFloat(portfolio[token].amount) + parseFloat(amount);
+
+            // if date is given, filter data by date
+            if (date) {
+                // convert timestamp to standard date format
+                const portfilioDate = new Date(parseInt(timestamp) * 1000);
+                const dateToCompare = portfilioDate.getFullYear() + "-" + (portfilioDate.getMonth() + 1) + "-" + portfilioDate.getDate();
+                
+                // if date is same as given date, add to portfolio
+                if (date === dateToCompare) {
+                    makePortfolioData(portfolio, token, amount, transaction_type, timestamp);
                 }
-                portfolio[token].timestamp = timestamp;                 
             } else {
-                portfolio[data.token] = {token: token, amount: amount || 0, timestamp: timestamp || 0};
+                makePortfolioData(portfolio, token, amount, transaction_type, timestamp);
             }
         }).on('end', () => {
             resolve(portfolio);
         });
     });
+};
+
+// create data for portfolio by deposit or withdrawal
+const makePortfolioData = (portfolio, token, amount, transaction_type, timestamp) => {
+    if (portfolio.hasOwnProperty(token)) {
+        if (transaction_type === "WITHDRAWAL") {
+            portfolio[token].amount = (amount > portfolio[token].amount) ? 
+                (parseFloat(amount) - parseFloat(portfolio[token].amount)) : 
+                (parseFloat(portfolio[token].amount) - parseFloat(amount));
+        } else {
+            portfolio[token].amount = parseFloat(portfolio[token].amount) + parseFloat(amount);
+        }
+        portfolio[token].timestamp = timestamp;                 
+    } else {
+        portfolio[token] = {token: token, amount: amount || 0, timestamp: timestamp || 0};
+    }
 };
 
 // get crypto currency data from crypto compare API
@@ -97,14 +115,54 @@ const getCryptoDataByArgs = () => {
     if (arguments.token && !arguments.date) {
         console.log("Given a token, return the latest portfolio value for that token in USD");
         getLatestPortfolioValue().then((data) => {
-            const tokens = Object.keys(data);
-            compareCrypto(tokens).then((crypto) => {
-                Object.keys(crypto).forEach(token => {
-                    if (arguments.token === token) {
-                        console.log(token,": ",data[token].amount * crypto[token].USD)
-                    }
+            if (Object.keys(data).length > 0) {
+                const tokens = Object.keys(data);
+                compareCrypto(tokens).then((crypto) => {
+                    Object.keys(crypto).forEach(token => {
+                        if (arguments.token === token) {
+                            console.log(token,": ",data[token].amount * crypto[token].USD)
+                        }
+                    });
                 });
-            });
+            } else {
+                console.log("No data found for given token");
+            }
+        });
+    }
+
+    //3. Given a date, return the portfolio value per token in USD on that date
+    if (!arguments.token && arguments.date) {
+        console.log("Given a date, return the portfolio value per token in USD on that date");
+        getLatestPortfolioValue(arguments.date).then((data) => {
+            if (Object.keys(data).length > 0) {
+                const tokens = Object.keys(data);
+                compareCrypto(tokens).then((crypto) => {
+                    Object.keys(crypto).forEach(token => {
+                        console.log(token,": ",data[token].amount * crypto[token].USD)
+                    });
+                });
+            } else {
+                console.log("No data found for given date");
+            }
+        });
+    }
+
+    //4. Given a date and a token, return the portfolio value of that token in USD on that date
+    if (arguments.token && arguments.date) {
+        console.log("Given a date and a token, return the portfolio value of that token in USD on that date");
+        getLatestPortfolioValue(arguments.date).then((data) => {
+            if (Object.keys(data).length > 0) {
+                const tokens = Object.keys(data);
+                compareCrypto(tokens).then((crypto) => {
+                    Object.keys(crypto).forEach(token => {
+                        if (arguments.token === token) {
+                            console.log(token,": ",data[token].amount * crypto[token].USD)
+                        }                    
+                    });
+                });
+            } else {
+                console.log("No data found for given date and token");
+            }
         });
     }
 };
